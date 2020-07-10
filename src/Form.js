@@ -3,14 +3,72 @@ import axios from "axios";
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 
+import './FormStyle.css';
+
 export default class Form extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
             name:"",
             email: "",
-            message: ""
+            message: "",
+            nameValid: false,
+            emailValid: false,
+            messageValid: false,
+            formValid: false
         };
+    }
+
+    validateForm = () => {
+        const {nameValid, emailValid, messageValid} = this.state;
+        this.setState({
+            formValid: nameValid && emailValid && messageValid
+        })
+    }
+
+    updateName = (name) => {
+        this.setState({name}, this.validateName)
+    }
+
+    validateName = () => {
+        const {name} = this.state;
+        let nameValid = true;
+
+        if (name.length < 1) {
+            nameValid = false;
+        }
+
+        this.setState({nameValid}, this.validateForm)
+    }
+
+    updateEmail = (email) => {
+        this.setState({email}, this.validateEmail)
+    }
+
+    validateEmail = () => {
+        const {email} = this.state;
+        let emailValid = true;
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+            emailValid = false;
+        }
+
+        this.setState({emailValid}, this.validateForm)
+    }
+
+    updateMessage = (message) => {
+        this.setState({message}, this.validateMessage)
+    }
+
+    validateMessage = () => {
+        const {message} = this.state;
+        let messageValid = true;
+
+        if (message.length < 1) {
+            messageValid = false;
+        }
+
+        this.setState({messageValid}, this.validateForm)
     }
 
     SubmitForm = async (message, email, name) => {
@@ -20,21 +78,17 @@ export default class Form extends React.Component {
             email = this.state.email;
 
             var dataJSON = {
-                "operation": "create",
-                "tableName": "MK-Decision-Challenge-Messages",
-                "payload": {
-                    "Item": {
-                        "id": (1 + Math.floor((Math.random() * 100))),
-                        "name": name,
-                        "email": email,
-                        "message": message
-                    }
+                "Item": {
+                    "id": (1 + Math.floor((Math.random() * 100))),
+                    "name": name,
+                    "email": email,
+                    "message": message
                 }
             };
 
             dataJSON = JSON.stringify(dataJSON);
-            console.log("sending info to database:");
-            console.log(dataJSON);
+            // console.log("sending info to database:");
+            // console.log(dataJSON);
             await axios.post('https://7ly0o5hj1l.execute-api.us-east-2.amazonaws.com/stage001/MKD-Request-Test', dataJSON);
 
             this.SendSES(email, message, name);
@@ -53,8 +107,8 @@ export default class Form extends React.Component {
             };
 
             emailJSON = JSON.stringify(emailJSON);
-            console.log("sending email with info:");
-            console.log(emailJSON);
+            // console.log("sending email with info:");
+            // console.log(emailJSON);
             await axios.post('https://7ly0o5hj1l.execute-api.us-east-2.amazonaws.com/stage001/MKDecision-Challenge-Email-Function', emailJSON);
 
         } catch (err) {
@@ -67,15 +121,17 @@ export default class Form extends React.Component {
 
         return (
             <div>
-                <form className="form">
+                <h2> MK Decision Challenge </h2>
+                <form className="Form">
                     <TextField
                         fullWidth
                         id="Name"
                         label="Name"
                         variant="outlined"
                         margin="normal"
+                        required
                         value={this.state.name}
-                        onChange={event => this.setState({ name: event.target.value })}
+                        onChange={event => this.updateName(event.target.value)}
                     />
                     <TextField
                         fullWidth
@@ -84,8 +140,9 @@ export default class Form extends React.Component {
                         variant="outlined"
                         margin="normal"
                         type="email"
+                        required
                         value={this.state.email}
-                        onChange={event => this.setState({ email: event.target.value })}
+                        onChange={event => this.updateEmail(event.target.value)}
                     />
                     <TextField
                         fullWidth
@@ -96,11 +153,13 @@ export default class Form extends React.Component {
                         defaultValue=""
                         margin="normal"
                         variant="outlined"
+                        required
                         value={this.state.message}
-                        onChange={event => this.setState({ message: event.target.value })}
+                        onChange={event => this.updateMessage(event.target.value)}
                     />
-                    <Button variant="outlined" onClick={this.SubmitForm} >Submit</Button>
+                    <Button variant="outlined" onClick={this.SubmitForm} disabled={!this.state.formValid} >Submit</Button>
                 </form>
+                <h6> Carl Amacker</h6>
             </div>
         )
     }
